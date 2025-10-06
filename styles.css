@@ -1,0 +1,219 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Courier New', monospace;
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+    color: #00ff00;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* ASCII Art Background Pattern */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(0, 255, 0, 0.03) 2px,
+            rgba(0, 255, 0, 0.03) 4px
+        );
+    pointer-events: none;
+    z-index: 0;
+}
+
+.ascii-art {
+    text-align: center;
+    padding: 20px;
+    font-size: 10px;
+    color: #00ff41;
+    text-shadow: 0 0 10px #00ff41;
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41;
+    }
+    to {
+        text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41, 0 0 30px #00ff41;
+    }
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+h1 {
+    text-align: center;
+    color: #00ff00;
+    font-size: 2.5em;
+    margin-bottom: 50px;
+    text-shadow: 0 0 20px #00ff00;
+    letter-spacing: 5px;
+}
+
+.game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-top: 50px;
+}
+
+.game-card {
+    background: rgba(0, 20, 0, 0.8);
+    border: 2px solid #00ff00;
+    padding: 30px;
+    text-align: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+}
+
+.game-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 0 40px rgba(0, 255, 0, 0.6);
+    border-color: #00ff41;
+}
+
+.game-preview {
+    margin-bottom: 20px;
+}
+
+.ascii-preview {
+    color: #00ff00;
+    font-size: 14px;
+    line-height: 1.2;
+    text-shadow: 0 0 5px #00ff00;
+}
+
+.game-card h2 {
+    color: #00ff41;
+    margin: 20px 0;
+    font-size: 1.8em;
+    text-transform: uppercase;
+}
+
+.game-card p {
+    color: #00cc00;
+    margin-bottom: 20px;
+    font-size: 1em;
+}
+
+.btn {
+    display: inline-block;
+    padding: 15px 40px;
+    background: transparent;
+    color: #00ff00;
+    border: 2px solid #00ff00;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.2em;
+    transition: all 0.3s ease;
+    letter-spacing: 3px;
+}
+
+.btn:hover {
+    background: #00ff00;
+    color: #000;
+    box-shadow: 0 0 20px #00ff00;
+}
+
+.footer-art {
+    text-align: center;
+    padding: 40px 20px;
+    font-size: 10px;
+    color: #00ff00;
+    margin-top: 50px;
+}
+
+/* Game Page Styles */
+.game-container {
+    text-align: center;
+    padding: 20px;
+}
+
+.game-title {
+    font-size: 3em;
+    margin-bottom: 20px;
+    color: #00ff41;
+    text-shadow: 0 0 20px #00ff41;
+}
+
+.game-canvas-container {
+    display: inline-block;
+    margin: 20px auto;
+    border: 3px solid #00ff00;
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
+    background: #000;
+}
+
+canvas {
+    display: block;
+    background: #000;
+}
+
+.controls {
+    margin: 30px auto;
+    max-width: 600px;
+}
+
+.controls p {
+    color: #00cc00;
+    margin: 10px 0;
+    font-size: 1.1em;
+}
+
+.score-display {
+    font-size: 1.5em;
+    color: #00ff00;
+    margin: 20px 0;
+    text-shadow: 0 0 10px #00ff00;
+}
+
+.back-btn {
+    display: inline-block;
+    margin: 20px;
+    padding: 15px 30px;
+    background: transparent;
+    color: #00ff00;
+    border: 2px solid #00ff00;
+    text-decoration: none;
+    font-size: 1.1em;
+    transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+    background: #00ff00;
+    color: #000;
+    box-shadow: 0 0 20px #00ff00;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 1.8em;
+    }
+    
+    .game-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .game-title {
+        font-size: 2em;
+    }
+}
