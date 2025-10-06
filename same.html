@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Same Game - ASCII Games</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="ascii-art">
+        <pre>
+ ██████  ▄▄▄       ███▄ ▄███▓▓█████ 
+▒██    ▒ ▒████▄    ▓██▒▀█▀ ██▒▓█   ▀ 
+░ ▓██▄   ▒██  ▀█▄  ▓██    ▓██░▒███   
+  ▒   ██▒░██▄▄▄▄██ ▒██    ▒██ ▒▓█  ▄ 
+▒██████▒▒ ▓█   ▓██▒▒██▒   ░██▒░▒████▒
+        </pre>
+    </div>
+    
+    <div class="game-container">
+        <h1 class="game-title">🎲 SAME GAME 🎲</h1>
+        
+        <div class="score-display">
+            <span>Score: <span id="score">0</span></span> | 
+            <span>High Score: <span id="highScore">0</span></span> | 
+            <span>Moves: <span id="moves">0</span></span>
+        </div>
+        
+        <div class="game-canvas-container">
+            <canvas id="gameCanvas" width="600" height="600"></canvas>
+        </div>
+        
+        <div class="controls">
+            <p>🎮 Controls: Click on groups of 2+ same-colored tiles to remove them</p>
+            <p>🎯 Larger groups = More points!</p>
+            <p>⭐ Clear all tiles for bonus points!</p>
+            <button id="newGameBtn" class="btn" style="margin-top: 20px;">NEW GAME</button>
+        </div>
+        
+        <a href="index.html" class="back-btn">← BACK TO MENU</a>
+    </div>
+    
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const gridSize = 10;
+        const tileSize = canvas.width / gridSize;
+        
+        // Colors with ASCII symbols
+        const colors = [
+            { color: '#ff0000', symbol: '●' }, // Red circle
+            { color: '#00ff00', symbol: '■' }, // Green square
+            { color: '#0000ff', symbol: '▲' }, // Blue triangle
+            { color: '#ffff00', symbol: '◆' }, // Yellow diamond
+            { color: '#ff00ff', symbol: '★' }  // Magenta star
+        ];
+        
+        // Game state
+        let grid = [];
+        let score = 0;
+        let moves = 0;
+        let highScore = localStorage.getItem('sameGameHighScore') || 0;
+        document.getElementById('highScore').textContent = highScore;
+        
+        let selectedGroup = [];
+        let hoveredTile = null;
+        
+        // Initialize grid
+        function initGrid() {
+            grid = [];
+            for (let y = 0; y < gridSize; y++) {
+                grid[y] = [];
+                for (let x = 0; x < gridSize; x++) {
+                    grid[y][x] = Math.floor(Math.random() * colors.length);
+                }
+            }
+            score = 0;
+            moves = 0;
+            document.getElementById('score').textContent = score;
+            document.getElementById('moves').textContent = moves;
+        }
+        
+        // Draw tile
+        function drawTile(x, y, colorIndex, highlight = false) {
+            if (colorIndex === -1) return; // Empty tile
+            
+            const tileColor = colors[colorIndex];
+            const px = x * tileSize;
+            const py = y * tileSize;
+            
+            // Tile background
+            ctx.fillStyle = highlight ? '#ffffff30' : '#00000030';
+            ctx.fillRect(px + 2, py + 2, tileSize - 4, tileSize - 4);
+            
+            // Tile color
+            ctx.fillStyle = tileColor.color;
+            ctx.fillRect(px + 5, py + 5, tileSize - 10, tileSize - 10);
+            
+            if (highlight) {
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = tileColor.color;
+                ctx.fillRect(px + 5, py + 5, tileSize - 10, tileSize - 10);
+                ctx.shadowBlur = 0;
+            }
+            
+            // Border
+            ctx.strokeStyle = '#00ff0050';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(px + 5, py + 5, tileSize - 10, tileSize - 10);
+            
+            // Draw ASCII symbol
+            ctx.fillStyle = '#000000';
+            ctx.font = `${tileSize * 0.5}px "Courier New"`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(tileColor.symbol, px + tileSize / 2, py + tileSize / 2);
+        }
+        
+        // Draw grid
+        function drawGrid() {
+            // Clear canvas
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background grid lines
+            ctx.strokeStyle = '#00ff0020';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= gridSize; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * tileSize, 0);
+                ctx.lineTo(i * tileSize, canvas.height);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(0, i * tileSize);
+                ctx.lineTo(canvas.width, i * tileSize);
+                ctx.stroke();
+            }
+            
+            // Draw tiles
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    const isHighlighted = selectedGroup.some(tile => 
+                        tile.x === x && tile.y === y
+                    );
+                    drawTile(x, y, grid[y][x], isHighlighted);
+                }
+            }
+            
+            // Draw group size if selected
+            if (selectedGroup.length > 1) {
+                const firstTile = selectedGroup[0];
+                const px = firstTile.x * tileSize;
+                const py = firstTile.y * tileSize;
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '24px "Courier New"';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowBlur = 5;
+                ctx.shadowColor = '#000000';
+                ctx.fillText(selectedGroup.length.toString(), px + tileSize / 2, py + tileSize / 2);
+                ctx.shadowBlur = 0;
+            }
+        }
+        
+        // Find connected tiles of same color
+        function findConnectedGroup(x, y, visited = new Set()) {
+            const key = `${x},${y}`;
+            
+            if (visited.has(key)) return [];
+            if (x < 0 || x >= gridSize || y < 0 || y >= gridSize) return [];
+            if (grid[y][x] === -1) return [];
+            
+            const targetColor = grid[y][x];
+            visited.add(key);
+            
+            let group = [{ x, y }];
+            
+            // Check all 4 directions
+            const directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+            for (const [dx, dy] of directions) {
+                const nx = x + dx;
+                const ny = y + dy;
+                const nkey = `${nx},${ny}`;
+                
+                if (!visited.has(nkey) && 
+                    nx >= 0 && nx < gridSize && 
+                    ny >= 0 && ny < gridSize && 
+                    grid[ny][nx] === targetColor) {
+                    group = group.concat(findConnectedGroup(nx, ny, visited));
+                }
+            }
+            
+            return group;
+        }
+        
+        // Remove selected tiles
+        function removeTiles() {
+            if (selectedGroup.length < 2) return;
+            
+            // Remove tiles
+            for (const tile of selectedGroup) {
+                grid[tile.y][tile.x] = -1;
+            }
+            
+            // Calculate score (more tiles = exponential points)
+            const points = Math.pow(selectedGroup.length, 2);
+            score += points;
+            moves++;
+            
+            document.getElementById('score').textContent = score;
+            document.getElementById('moves').textContent = moves;
+            
+            // Apply gravity
+            applyGravity();
+            
+            // Clear selection
+            selectedGroup = [];
+            
+            // Check if game is over
+            if (isGameOver()) {
+                endGame();
+            }
+            
+            drawGrid();
+        }
+        
+        // Apply gravity to tiles
+        function applyGravity() {
+            // Move tiles down
+            for (let x = 0; x < gridSize; x++) {
+                let writeY = gridSize - 1;
+                for (let y = gridSize - 1; y >= 0; y--) {
+                    if (grid[y][x] !== -1) {
+                        if (y !== writeY) {
+                            grid[writeY][x] = grid[y][x];
+                            grid[y][x] = -1;
+                        }
+                        writeY--;
+                    }
+                }
+            }
+            
+            // Move columns left to fill gaps
+            let writeX = 0;
+            for (let x = 0; x < gridSize; x++) {
+                if (grid[gridSize - 1][x] !== -1) {
+                    if (x !== writeX) {
+                        for (let y = 0; y < gridSize; y++) {
+                            grid[y][writeX] = grid[y][x];
+                            grid[y][x] = -1;
+                        }
+                    }
+                    writeX++;
+                }
+            }
+        }
+        
+        // Check if game is over
+        function isGameOver() {
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    if (grid[y][x] !== -1) {
+                        const group = findConnectedGroup(x, y);
+                        if (group.length >= 2) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+        
+        // Check if board is clear
+        function isBoardClear() {
+            for (let y = 0; y < gridSize; y++) {
+                for (let x = 0; x < gridSize; x++) {
+                    if (grid[y][x] !== -1) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+        
+        // End game
+        function endGame() {
+            let bonus = 0;
+            if (isBoardClear()) {
+                bonus = 1000;
+                score += bonus;
+                document.getElementById('score').textContent = score;
+            }
+            
+            setTimeout(() => {
+                let message = bonus > 0 ? 
+                    `🎉 PERFECT! Bonus: ${bonus}\n\nFinal Score: ${score}` :
+                    `Game Over!\n\nFinal Score: ${score}`;
+                
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem('sameGameHighScore', highScore);
+                    document.getElementById('highScore').textContent = highScore;
+                    message += '\n\n🏆 NEW HIGH SCORE! 🏆';
+                }
+                
+                alert(message);
+            }, 100);
+        }
+        
+        // Mouse move handler
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / tileSize);
+            const y = Math.floor((e.clientY - rect.top) / tileSize);
+            
+            if (x >= 0 && x < gridSize && y >= 0 && y < gridSize && grid[y][x] !== -1) {
+                const group = findConnectedGroup(x, y);
+                if (group.length >= 2) {
+                    selectedGroup = group;
+                    canvas.style.cursor = 'pointer';
+                } else {
+                    selectedGroup = [];
+                    canvas.style.cursor = 'default';
+                }
+                drawGrid();
+            }
+        });
+        
+        // Mouse click handler
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / tileSize);
+            const y = Math.floor((e.clientY - rect.top) / tileSize);
+            
+            if (x >= 0 && x < gridSize && y >= 0 && y < gridSize && grid[y][x] !== -1) {
+                const group = findConnectedGroup(x, y);
+                if (group.length >= 2) {
+                    selectedGroup = group;
+                    removeTiles();
+                }
+            }
+        });
+        
+        // Mouse leave handler
+        canvas.addEventListener('mouseleave', () => {
+            selectedGroup = [];
+            canvas.style.cursor = 'default';
+            drawGrid();
+        });
+        
+        // New game button
+        document.getElementById('newGameBtn').addEventListener('click', () => {
+            initGrid();
+            drawGrid();
+        });
+        
+        // Start game
+        initGrid();
+        drawGrid();
+    </script>
+</body>
+</html>
